@@ -59,18 +59,21 @@
 
         /* --- Video Player (TikTok Style) --- */
         #video-container {
-            width: 100%; height: 100%; overflow-y: scroll;
+            width: 100%; 
+            height: var(--tg-viewport-height, 100vh); /* Адаптация под Telegram */
+            overflow-y: scroll;
             scroll-snap-type: y mandatory;
+            background-color: #000;
         }
         .video-section {
-            width: 100%; height: 100%; scroll-snap-align: start;
-            position: relative; display: flex;
-            justify-content: center; align-items: center; cursor: pointer;
-            opacity: 0; /* Изначально скрываем секции для плавной загрузки */
-            transition: opacity 0.3s ease-in-out;
-        }
-        .video-section.visible {
-            opacity: 1; /* Показываем только активную секцию */
+            width: 100%; 
+            height: var(--tg-viewport-height, 100vh); /* Адаптация под Telegram */
+            scroll-snap-align: start;
+            position: relative; 
+            display: flex;
+            justify-content: center; 
+            align-items: center; 
+            cursor: pointer;
         }
         video { width: 100%; height: 100%; object-fit: cover; }
         .video-title {
@@ -85,10 +88,10 @@
         }
         .play-pause-icon.visible { opacity: 1; transform: scale(1); }
 
-        /* --- Grid View Container (New) --- */
+        /* --- Grid View Container --- */
         #grid-container {
             padding: 80px 10px 20px 10px;
-            height: 100%;
+            height: var(--tg-viewport-height, 100vh); /* Адаптация под Telegram */
             box-sizing: border-box;
             overflow-y: auto;
             display: grid;
@@ -274,7 +277,7 @@
 </head>
 <body>
     
-    <div id="app-container">
+    <div id="app-container" class="hidden">
         <div id="category-selector"></div>
         
         <div id="video-container"></div>
@@ -444,17 +447,17 @@
         const authContainer = document.getElementById('auth-container');
 
         if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initData) {
-            appContainer.classList.add('hidden');
             authContainer.classList.remove('hidden');
-            return;
+            return; 
         }
 
+        appContainer.classList.remove('hidden');
+        
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
         tg.setHeaderColor('#000000');
         tg.setBackgroundColor('#000000');
-
 
         const appData = {
             videos: [
@@ -462,7 +465,6 @@
                 {id: 6, title: "Гадкий я 4", url: "https://files.catbox.moe/7vskkg.mp4", categoryId: 101, views: 506, liked: false, coverUrl: "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/tMeGza0xMVA6Tz2a6x9DqgG23a.jpg", duration: "85 min", quality: "HD"},
                 {id: 7, title: "Бордерлендс", url: "https://files.catbox.moe/06jt4x.mp4", categoryId: 101, views: 229, liked: false, coverUrl: "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/tsoiKOt7iQiJ26y1Svt2zD9GkC.jpg", duration: "105 min", quality: "SD"},
                 {id: 8, title: "Битлджус Битлджус", url: "https://files.catbox.moe/bh7av4.mp4", categoryId: 101, views: 204, liked: false, coverUrl: "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/qO25C4TsdYLaeJdCoSCgeiugO2.jpg", duration: "177 min", quality: "WEBDL"},
-
                 {id: 1, title: "Горный пейзаж", url: "https://files.catbox.moe/7vskkg.mp4", categoryId: 1, views: 150, liked: false, coverUrl: "https://images.pexels.com/photos/3889853/pexels-photo-3889853.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", duration: "1 min", quality: "4K"},
                 {id: 2, title: "Абстракция", url: "https://files.catbox.moe/06jt4x.mp4", categoryId: 2, views: 80, liked: true, coverUrl: "https://images.pexels.com/photos/2693212/pexels-photo-2693212.png?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", duration: "2 min", quality: "HD"},
                 {id: 3, title: "Город ночью", url: "https://files.catbox.moe/bh7av4.mp4", categoryId: 1, views: 200, liked: false, coverUrl: "https://images.pexels.com/photos/1105766/pexels-photo-1105766.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", duration: "3 min", quality: "HD"},
@@ -477,20 +479,12 @@
                 {id: 101, name: "Фильмы", parentId: 3},
                 {id: 102, name: "Сериалы", parentId: 3}
             ],
-            ads: [
-                {id: 1, type: 'image', source: 'https://via.placeholder.com/300x150.png/007bff/ffffff?text=Ваша+Реклама', description: 'Лучший сервис в мире!', btnText: 'Узнать больше', btnLink: '#', active: true}
-            ],
-            settings: {
-                userUploadsAllowed: true,
-                adminPass: "1234"
-            },
+            ads: [],
+            settings: { userUploadsAllowed: true, adminPass: "1234" },
             state: {
-                currentCategoryId: -1,
-                viewingParentId: null,
-                isMuted: true,
-                currentActiveVideoElement: null,
-                pressTimer: null,
-                activeModal: null
+                currentCategoryId: -1, viewingParentId: null, isMuted: true,
+                currentActiveVideoElement: null, pressTimer: null, activeModal: null,
+                videosToRender: [], currentVideoIndex: -1, isLoading: false,
             }
         };
 
@@ -508,22 +502,18 @@
             userAddVideoBtn: document.getElementById('user-add-video-btn'),
             adminPanelBtn: document.getElementById('admin-panel-btn'),
             toast: document.getElementById('toast-notification'),
-            
             playerModal: document.getElementById('player-modal'),
             playerModalVideo: document.getElementById('player-modal-video'),
             playerModalCloseBtn: document.getElementById('player-modal-close-btn'),
-            
             userUploadModal: document.getElementById('user-upload-modal'),
             adminPanel: document.getElementById('admin-panel'),
             videoFormModal: document.getElementById('video-form-modal'),
             categoryFormModal: document.getElementById('category-form-modal'),
             adFormModal: document.getElementById('ad-form-modal'),
             managementModal: document.getElementById('management-modal'),
-
             userUploadForm: document.getElementById('user-upload-form'),
             userVideoTitle: document.getElementById('user-video-title'),
             userVideoFile: document.getElementById('user-video-file'),
-
             adminPanelCloseBtn: document.getElementById('admin-panel-close-btn'),
             adminAddVideoBtn: document.getElementById('admin-add-video-btn'),
             adminManageVideosBtn: document.getElementById('admin-manage-videos-btn'),
@@ -531,7 +521,6 @@
             adminAddAdBtn: document.getElementById('admin-add-ad-btn'),
             adminManageAdsBtn: document.getElementById('admin-manage-ads-btn'),
             adminUploadToggle: document.getElementById('admin-toggle-upload'),
-
             videoForm: document.getElementById('video-form'),
             videoFormTitle: document.getElementById('video-form-title'),
             videoIdInput: document.getElementById('video-id-input'),
@@ -544,13 +533,11 @@
             videoUrlInput: document.getElementById('video-url-input'),
             videoFileInput: document.getElementById('video-file-input'),
             videoFormCancelBtn: document.getElementById('video-form-cancel-btn'),
-
             categoryForm: document.getElementById('category-form'),
             categoryFormTitle: document.getElementById('category-form-title'),
             categoryIdInput: document.getElementById('category-id-input'),
             categoryNameInput: document.getElementById('category-name-input'),
             categoryFormCancelBtn: document.getElementById('category-form-cancel-btn'),
-
             adForm: document.getElementById('ad-form'),
             adFormTitle: document.getElementById('ad-form-title'),
             adIdInput: document.getElementById('ad-id-input'),
@@ -561,7 +548,6 @@
             adBtnTextInput: document.getElementById('ad-btn-text-input'),
             adBtnLinkInput: document.getElementById('ad-btn-link-input'),
             adFormCancelBtn: document.getElementById('ad-form-cancel-btn'),
-
             managementModalCloseBtn: document.getElementById('management-modal-close-btn'),
             managementList: document.getElementById('management-list'),
             managementTitle: document.getElementById('management-title'),
@@ -657,55 +643,86 @@
                 dom.categorySelector.appendChild(btn);
             });
         };
+        
+        // --- НОВАЯ ЛОГИКА ДИНАМИЧЕСКОЙ ПРОГРУЗКИ ---
+        const RENDER_BATCH_SIZE = 5;
 
-        const renderVideos = () => {
-            dom.videoContainer.innerHTML = ''; 
-            let videosToRender = [];
+        const createVideoSection = (videoData) => {
+            const section = document.createElement('section');
+            section.className = 'video-section';
+            section.dataset.videoId = videoData.id;
+
+            const video = document.createElement('video');
+            video.src = videoData.url;
+            if (videoData.coverUrl) video.poster = videoData.coverUrl;
+            video.loop = true;
+            video.playsInline = true;
+            video.preload = 'metadata';
+
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'video-title';
+            titleDiv.textContent = videoData.title;
+
+            const playIcon = document.createElement('div');
+            playIcon.className = 'play-pause-icon';
+            playIcon.innerHTML = `<svg width="80" height="80" viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)"><use href="#icon-play"></use></svg>`;
+
+            section.onclick = () => {
+                if (video.paused) { video.play(); playIcon.classList.remove('visible'); }
+                else { video.pause(); playIcon.classList.add('visible'); }
+            };
+
+            section.append(video, titleDiv, playIcon);
+            return section;
+        };
+
+        const loadMoreVideos = () => {
+            if (appData.state.isLoading) return;
+
+            const from = dom.videoContainer.children.length;
+            const to = from + RENDER_BATCH_SIZE;
+            const videosToLoad = appData.state.videosToRender.slice(from, to);
+
+            if (videosToLoad.length === 0) return;
+
+            appData.state.isLoading = true;
+            videosToLoad.forEach(videoData => {
+                const section = createVideoSection(videoData);
+                dom.videoContainer.appendChild(section);
+                observer.observe(section);
+            });
+            appData.state.isLoading = false;
+        };
+        
+        dom.videoContainer.onscroll = () => {
+            const { scrollTop, scrollHeight, clientHeight } = dom.videoContainer;
+            if (scrollHeight - scrollTop - clientHeight < (clientHeight * 1.5)) { // Загружаем за 1.5 экрана до конца
+                loadMoreVideos();
+            }
+        };
+
+        const prepareVideoList = () => {
+            dom.videoContainer.innerHTML = '';
+            let videos = [];
             const catId = appData.state.currentCategoryId;
 
             if (catId === -1) { 
-                videosToRender = appData.videos.filter(v => v.views > 100).sort((a,b) => b.views - a.views);
-                if (videosToRender.length === 0) showToast("Пока нет популярных видео");
+                videos = appData.videos.filter(v => v.views > 100).sort((a,b) => b.views - a.views);
             } else if (catId === -2) {
-                videosToRender = appData.videos.filter(v => v.liked);
-                if (videosToRender.length === 0) showToast("Вы еще ничего не лайкнули");
+                videos = appData.videos.filter(v => v.liked);
             } else {
-                videosToRender = appData.videos.filter(v => v.categoryId === catId);
-                 if (videosToRender.length === 0) showToast("В этой категории пока нет видео");
+                videos = appData.videos.filter(v => v.categoryId === catId);
             }
-
-            videosToRender.forEach(videoData => {
-                const section = document.createElement('section');
-                section.className = 'video-section';
-                section.dataset.videoId = videoData.id;
-
-                const video = document.createElement('video');
-                video.src = videoData.url;
-                if (videoData.coverUrl) {
-                    video.poster = videoData.coverUrl;
-                }
-                video.loop = true;
-                video.playsInline = true;
-
-                const titleDiv = document.createElement('div');
-                titleDiv.className = 'video-title';
-                titleDiv.textContent = videoData.title;
-
-                const playIcon = document.createElement('div');
-                playIcon.className = 'play-pause-icon';
-                playIcon.innerHTML = `<svg width="80" height="80" viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)"><use href="#icon-play"></use></svg>`;
-
-                section.onclick = () => {
-                    if (video.paused) { video.play(); playIcon.classList.remove('visible'); }
-                    else { video.pause(); playIcon.classList.add('visible'); }
-                };
-
-                section.append(video, titleDiv, playIcon);
-                dom.videoContainer.prepend(section);
-                observer.observe(section);
-            });
+            
+            appData.state.videosToRender = videos;
+            if (videos.length === 0) {
+                 showToast("В этой категории пока нет видео");
+            }
+            loadMoreVideos(); // Загружаем первую партию
         };
-        
+
+        // --- КОНЕЦ НОВОЙ ЛОГИКИ ---
+
         const renderGridView = () => {
             dom.gridContainer.innerHTML = '';
             const videosToRender = appData.videos.filter(v => v.categoryId === appData.state.currentCategoryId);
@@ -743,14 +760,12 @@
                 dom.videoContainer.classList.add('hidden');
                 dom.gridContainer.classList.remove('hidden');
                 dom.sideMenu.classList.add('hidden');
-                dom.videoContainer.innerHTML = ''; 
                 renderGridView();
             } else {
                 dom.gridContainer.classList.add('hidden');
                 dom.videoContainer.classList.remove('hidden');
                 dom.sideMenu.classList.remove('hidden');
-                dom.gridContainer.innerHTML = '';
-                renderVideos();
+                prepareVideoList(); // Используем новую функцию
             }
         }
 
@@ -765,7 +780,6 @@
             entries.forEach(entry => {
                 const videoElement = entry.target.querySelector('video');
                 if (entry.isIntersecting) {
-                    entry.target.classList.add('visible'); // Делаем секцию видимой
                     appData.state.currentActiveVideoElement = entry.target;
                     videoElement.muted = appData.state.isMuted;
                     videoElement.play().catch(() => {});
@@ -781,13 +795,14 @@
                     }
 
                 } else {
-                    entry.target.classList.remove('visible'); // Скрываем
                     videoElement.pause();
                     entry.target.viewCounted = false; 
                 }
             });
         }, { threshold: 0.8 });
-
+        
+        // --- ОСТАЛЬНОЙ КОД БЕЗ ИЗМЕНЕНИЙ ---
+        
         const openVideoForm = (video = null) => {
             dom.videoForm.reset();
             dom.videoIdInput.value = '';
@@ -1067,7 +1082,7 @@
                 showToast(videoData.liked ? "Добавлено в любимые" : "Удалено из любимых");
 
                 if(appData.state.currentCategoryId === -2 && !videoData.liked) {
-                    renderVideos();
+                    renderAll();
                 }
              }
         };
