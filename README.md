@@ -66,6 +66,11 @@
             width: 100%; height: 100%; scroll-snap-align: start;
             position: relative; display: flex;
             justify-content: center; align-items: center; cursor: pointer;
+            opacity: 0; /* Изначально скрываем секции для плавной загрузки */
+            transition: opacity 0.3s ease-in-out;
+        }
+        .video-section.visible {
+            opacity: 1; /* Показываем только активную секцию */
         }
         video { width: 100%; height: 100%; object-fit: cover; }
         .video-title {
@@ -438,15 +443,18 @@
         const appContainer = document.getElementById('app-container');
         const authContainer = document.getElementById('auth-container');
 
-        // ПРОВЕРКА НА ЗАПУСК ВНУТРИ TELEGRAM
         if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initData) {
             appContainer.classList.add('hidden');
             authContainer.classList.remove('hidden');
-            return; // Останавливаем выполнение скрипта
+            return;
         }
 
-        // Если проверка пройдена, продолжаем
-        // window.Telegram.WebApp.ready(); // Сообщаем Telegram, что приложение готово
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        tg.setHeaderColor('#000000');
+        tg.setBackgroundColor('#000000');
+
 
         const appData = {
             videos: [
@@ -757,6 +765,7 @@
             entries.forEach(entry => {
                 const videoElement = entry.target.querySelector('video');
                 if (entry.isIntersecting) {
+                    entry.target.classList.add('visible'); // Делаем секцию видимой
                     appData.state.currentActiveVideoElement = entry.target;
                     videoElement.muted = appData.state.isMuted;
                     videoElement.play().catch(() => {});
@@ -772,6 +781,7 @@
                     }
 
                 } else {
+                    entry.target.classList.remove('visible'); // Скрываем
                     videoElement.pause();
                     entry.target.viewCounted = false; 
                 }
