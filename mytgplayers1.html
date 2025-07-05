@@ -1,112 +1,125 @@
 <!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Telegram Kino</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kino Player</title>
   <style>
-    body {
+    * {
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #0f0f0f;
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: start;
-      min-height: 100vh;
-      padding: 1rem;
-    }.container {
-  width: 100%;
-  max-width: 480px;
+      padding: 0;
+      box-sizing: border-box;
+    }body {
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(to bottom right, #121212, #1f1f1f);
+  color: white;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  padding: 20px;
 }
 
-.video-player video {
+.container {
+  width: 100%;
+  max-width: 600px;
+  background: #181818;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
+  padding: 20px;
+}
+
+video {
   width: 100%;
   border-radius: 12px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.4);
+  box-shadow: 0 0 15px rgba(0,0,0,0.3);
 }
 
 .controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 0.5rem 0;
+  margin: 15px 0;
+}
+
+.controls select,
+.controls button {
+  background-color: #292929;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
 }
 
 .tabs {
   display: flex;
-  justify-content: space-between;
-  margin: 1rem 0 0.5rem;
+  justify-content: space-around;
+  margin-top: 10px;
 }
 
 .tabs button {
   flex: 1;
-  padding: 0.5rem;
-  background: transparent;
+  padding: 10px;
   border: none;
+  background: transparent;
   color: #aaa;
-  font-weight: 500;
+  font-size: 15px;
   border-bottom: 2px solid transparent;
-  transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .tabs button.active {
-  color: #fff;
+  color: white;
   border-bottom: 2px solid #fff;
 }
 
 .playlist-item {
   display: flex;
   align-items: center;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid #222;
-  transition: background 0.2s;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #2a2a2a;
   cursor: pointer;
+  transition: background 0.2s ease;
 }
 
 .playlist-item:hover {
-  background-color: #1c1c1c;
+  background-color: #222;
 }
 
 .playlist-item img {
   width: 50px;
   height: 50px;
-  margin-right: 1rem;
   border-radius: 8px;
   object-fit: cover;
 }
 
 .playlist-item div {
-  display: flex;
-  flex-direction: column;
+  flex: 1;
 }
 
-.add-btn {
+.add-video {
+  margin-top: 20px;
   width: 100%;
-  background-color: #222;
-  border: none;
-  color: white;
-  font-size: 1rem;
-  padding: 1rem;
-  margin-top: 1rem;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.add-btn:hover {
   background-color: #333;
+  color: white;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
-select {
-  background-color: #000;
-  color: #fff;
-  border: 1px solid #444;
-  border-radius: 6px;
-  padding: 0.3rem;
+.add-video:hover {
+  background-color: #444;
 }
 
 #notTelegram {
   text-align: center;
+  display: none;
 }
 
 #notTelegram a {
@@ -123,11 +136,9 @@ select {
 </head>
 <body>
   <div class="container" id="telegramApp">
-    <div class="video-player">
-      <video id="video" controls poster="https://via.placeholder.com/480x270">
-        <source src="https://path.to/video.mp4" type="video/mp4">
-      </video>
-    </div><div class="controls">
+    <video controls poster="https://via.placeholder.com/600x300">
+      <source src="https://path.to/video.mp4" type="video/mp4">
+    </video><div class="controls">
   <label for="quality">Sifat:</label>
   <select id="quality">
     <option>Auto</option>
@@ -162,27 +173,27 @@ select {
   <div class="playlist-item">
     <img src="https://via.placeholder.com/50" alt="">
     <div>
-      <strong>Public Source</strong>
+      <strong>Public Video</strong>
       <small>Entertainment</small>
     </div>
   </div>
 </div>
 
-<button class="add-btn">＋ Video Qo‘shish</button>
+<button class="add-video">＋ Video Qo‘shish</button>
 
-  </div>  <div id="notTelegram" style="display: none">
+  </div>  <div id="notTelegram">
     <h2>Ushbu ilova faqat Telegram ichida ishlaydi</h2>
     <a href="https://t.me/UZLAYNUZ">@UZLAYNUZ kanaliga o‘tish</a>
   </div>  <script>
     function toggleFullscreen() {
-      const video = document.getElementById('video');
+      const video = document.querySelector('video');
       if (video.requestFullscreen) video.requestFullscreen();
       else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen();
       else if (video.msRequestFullscreen) video.msRequestFullscreen();
     }
 
-    // Telegram Mini App check
-    window.addEventListener('DOMContentLoaded', function () {
+    // Detect if not in Telegram
+    window.addEventListener('DOMContentLoaded', () => {
       const isTelegram = navigator.userAgent.includes('Telegram');
       if (isTelegram) {
         document.getElementById('telegramApp').style.display = 'block';
